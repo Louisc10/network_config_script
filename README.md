@@ -50,6 +50,22 @@ The script performs the following actions:
 python network_config.py
 ```
 
+## Build Requirements
+
+`pyinstaller`: Used to create a standalone executable from the Python script. Install it using pip:
+
+```bash
+pip install pyinstaller
+```
+
+## Build
+
+To build the standalone executable, run the following command:
+
+```bash
+pyinstaller --onefile --icon=app.ico -F network_config.py
+```
+
 ## Notes
 
 - Ensure you have administrative privileges to run `netsh` commands on your Windows machine.
