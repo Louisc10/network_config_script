@@ -4,17 +4,20 @@ import subprocess
 TARGET_IP = '150'
 
 def run_command(command):
-    result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding='utf-8')
-    if result.returncode != 0:
-        print(f"Command failed with error: {result.stderr}")
-    return result.stdout
+    try:
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding='utf-8')
+        result.check_returncode()
+        print(f"Commande exécutée avec succès:\n{result.stdout}")
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"Échec de la commande avec l'erreur: {e.stderr}")
+        return None
 
 def get_network_info():
     result = run_command('netsh interface ip show config "Ethernet"')
-    print("Command output:", result)
-
+        
     ip_match = re.search(r'Adresse IP\s*:\s*(\d+\.\d+\.\d+\.\d+)', result)
-    subnet_mask_match = re.search(r'(masque\s*\d+\.\d+\.\d+\.\d+)', result)
+    subnet_mask_match = re.search(r'Préfixe de sous-réseau\s*:\s*\d+\.\d+\.\d+\.\d+/\d+\s*\(masque\s*(\d+\.\d+\.\d+\.\d+)\)', result)
     gateway_match = re.search(r'Passerelle par défaut\s*:\s*(\d+\.\d+\.\d+\.\d+)', result)
 
     if ip_match and subnet_mask_match and gateway_match:
@@ -26,22 +29,22 @@ def set_static_ip(ip, subnet_mask, gateway):
     run_command(static_ip_command)
 
 if __name__ == '__main__':
-    print('Setting Ethernet to DHCP...')
+    print('Réglage de l\'Ethernet sur DHCP...')
     run_command('netsh interface ip set address "Ethernet" dhcp')
 
-    print('Getting network information...')
+    print('Obtention des informations réseau...')
     ip, subnet_mask, gateway = get_network_info()
     if ip and subnet_mask and gateway:
-        print(f'My IP Address: {ip}')
-        print(f'Subnet Mask: {subnet_mask}')
-        print(f'Gateway: {gateway}')
+        print(f'Mon adresse IP: {ip}')
+        print(f'Masque de sous-réseau: {subnet_mask}')
+        print(f'Passerelle: {gateway}')
         
         subnet = '.'.join(ip.split('.')[:3])
         static_ip = f'{subnet}.{TARGET_IP}'
 
         set_static_ip(static_ip, subnet_mask, gateway)
-        print(f'Static IP set to: {static_ip}')
+        print(f'Adresse IP statique définie sur: {static_ip}')
     else:
-        print('Failed to retrieve network information from DHCP')
+        print('Échec de la récupération des informations réseau depuis DHCP')
         
     run_command('exit')
